@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validador de Autómata Finito</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #8b5cf6;
+            --accent-color: #06b6d4;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --dark-color: #1f2937;
+            --light-color: #f8fafc;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--light-color) 0%, #e2e8f0 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .main-container {
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card-custom {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: none;
+            transition: all 0.3s ease;
+            margin-bottom: 2rem;
+        }
+
+        .card-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header-custom {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 1.5rem;
+            border: none;
+        }
+
+        .card-body {
+            padding: 2rem !important;
+        }
+
+        .automata-info {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+        }
+
+        .btn-custom {
+            border-radius: 10px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            margin: 0.25rem;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+        }
+
+        .btn-success-custom {
+            background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-danger-custom {
+            background: linear-gradient(135deg, var(--danger-color) 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-box {
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            border-left: 4px solid;
+        }
+
+        .result-accepted {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border-left-color: var(--success-color);
+        }
+
+        .result-rejected {
+            background: linear-gradient(135deg, #fef2f2 0%, #fef2f2 100%);
+            border-left-color: var(--danger-color);
+        }
+
+        .transition-trace {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .state-current {
+            background: var(--primary-color);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .state-final {
+            background: var(--success-color);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .state-normal {
+            background: #e2e8f0;
+            color: #475569;
+            padding: 0.2rem 0.5rem;
+            border-radius: 5px;
+        }
+
+        .symbol-processed {
+            background: var(--warning-color);
+            color: white;
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            margin: 0 0.2rem;
+        }
+
+        .transition-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert-container-fixed {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1050;
+            width: 400px;
+            max-width: 90vw;
+        }
+
+        .alert-slide-in {
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .alphabet-display {
+            background: #f1f5f9;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 0.2rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-project-diagram me-2"></i>
+                Validador de Autómata Finito
+            </a>
+        </div>
+    </nav>
+
+    <div class="container main-container">
+        <!-- Panel de Información del Autómata -->
+        <div class="row">
+            <div class="col-12">
+                <div class="automata-info">
+                    <h5><i class="fas fa-info-circle me-2"></i>Información del Autómata</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Alfabeto (Σ):</strong> 
+                            <span class="alphabet-display">a</span>
+                            <span class="alphabet-display">b</span>
+                            <span class="alphabet-display">c</span>
+                            <span class="alphabet-display">z</span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Estados:</strong> Q = {A, B, C, D}
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <strong>Estado inicial:</strong> A
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Estado final:</strong> D
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Panel de Validación -->
+            <div class="col-lg-8">
+                <div class="card-custom">
+                    <div class="card-header-custom">
+                        <h4><i class="fas fa-check-circle me-2"></i>Validador de Cadenas</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Input de cadena -->
+                        <div class="mb-4">
+                            <label class="form-label"><strong>Ingrese la cadena a validar:</strong></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="stringInput" 
+                                       placeholder="Ejemplo: abc, bz, cabz..." 
+                                       style="font-size: 1.1rem; font-family: 'Courier New', monospace;">
+                                <button class="btn btn-primary-custom" onclick="validateString()">
+                                    <i class="fas fa-play me-1"></i>Validar
+                                </button>
+                            </div>
+                            <small class="text-muted">Ingrese una cadena usando los símbolos: a, b, c, z</small>
+                        </div>
+
+                        <!-- Botones de ejemplo -->
+                        <div class="mb-4">
+                            <label class="form-label"><strong>Cadenas de ejemplo:</strong></label>
+                            <div class="d-flex flex-wrap">
+                                <button class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="setExample('abc')">abc</button>
+                                <button class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="setExample('bz')">bz</button>
+                                <button class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="setExample('cabz')">cabz</button>
+                                <button class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="setExample('bcz')">bcz</button>
+                                <button class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="setExample('aa')">aa</button>
+                                <button class="btn btn-outline-secondary btn-sm me-2 mb-2" onclick="setExample('abcd')">abcd</button>
+                            </div>
+                        </div>
+
+                        <!-- Botón para limpiar -->
+                        <div class="d-flex">
+                            <button class="btn btn-danger-custom btn-custom" onclick="clearAll()">
+                                <i class="fas fa-broom me-1"></i>Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Resultado -->
+                <div id="resultPanel" class="d-none">
+                    <div class="card-custom fade-in">
+                        <div class="card-header-custom">
+                            <h5><i class="fas fa-chart-bar me-2"></i>Resultado de la Validación</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="resultContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de Tabla de Transiciones -->
+            <div class="col-lg-4">
+                <div class="card-custom">
+                    <div class="card-header-custom">
+                        <h5><i class="fas fa-table me-2"></i>Tabla de Transiciones</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="transition-table">
+                            <table class="table table-striped mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Estado</th>
+                                        <th>a</th>
+                                        <th>b</th>
+                                        <th>c</th>
+                                        <th>z</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>→A</strong></td>
+                                        <td>B</td>
+                                        <td>B</td>
+                                        <td>B</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>B</strong></td>
+                                        <td>C</td>
+                                        <td>D</td>
+                                        <td>C</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>C</strong></td>
+                                        <td>-</td>
+                                        <td>B</td>
+                                        <td>B</td>
+                                        <td>D</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>*D</strong></td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="p-3">
+                            <small class="text-muted">
+                                <strong>→A</strong>: Estado inicial<br>
+                                <strong>*D</strong>: Estado final<br>
+                                <strong>-</strong>: Sin transición
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de Alertas -->
+        <div id="alertContainer" class="alert-container-fixed"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Definición del autómata
+        const automaton = {
+            alphabet: ['a', 'b', 'c', 'z'],
+            states: ['A', 'B', 'C', 'D'],
+            initialState: 'A',
+            finalStates: ['D'],
+            transitions: {
+                'A': { 'a': 'B', 'b': 'B', 'c': 'B' },
+                'B': { 'a': 'C', 'b': 'D', 'c': 'C' },
+                'C': { 'b': 'B', 'c': 'B', 'z': 'D' },
+                'D': {}
+            }
+        };
+
+        // Función para mostrar alertas
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertId = 'alert-' + Date.now();
+            
+            let icon = 'info-circle';
+            if (type === 'danger') icon = 'exclamation-triangle';
+            else if (type === 'success') icon = 'check-circle';
+            else if (type === 'warning') icon = 'exclamation-circle';
+            
+            const alertHTML = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show alert-slide-in mb-3" role="alert">
+                    <i class="fas fa-${icon} me-2"></i>
+                    <strong>${message}</strong>
+                    <button type="button" class="btn-close" onclick="dismissAlert('${alertId}')"></button>
+                </div>
+            `;
+            
+            alertContainer.insertAdjacentHTML('afterbegin', alertHTML);
+            
+            setTimeout(() => {
+                dismissAlert(alertId);
+            }, 5000);
+        }
+
+        function dismissAlert(alertId) {
+            const alert = document.getElementById(alertId);
+            if (alert) {
+                alert.classList.remove('show');
+                setTimeout(() => {
+                    alert.remove();
+                }, 150);
+            }
+        }
+
+        // Función para validar si los símbolos pertenecen al alfabeto
+        function validateAlphabet(inputString) {
+            for (let char of inputString) {
+                if (!automaton.alphabet.includes(char)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Función principal de validación
+        function validateString() {
+            const input = document.getElementById('stringInput').value.trim();
+            
+            if (!input) {
+                showAlert('Por favor ingrese una cadena para validar.', 'warning');
+                return;
+            }
+
+            // Validar alfabeto
+            if (!validateAlphabet(input)) {
+                showAlert(`La cadena contiene símbolos no válidos. Use solo: ${automaton.alphabet.join(', ')}`, 'danger');
+                return;
+            }
+
+            // Procesar la cadena
+            const result = processString(input);
+            displayResult(input, result);
+        }
+
+        // Función para procesar la cadena en el autómata
+        function processString(inputString) {
+            let currentState = automaton.initialState;
+            const trace = [];
+            let isValid = true;
+
+            trace.push({
+                step: 0,
+                state: currentState,
+                remainingInput: inputString,
+                symbol: null,
+                action: 'Estado inicial'
+            });
+
+            for (let i = 0; i < inputString.length; i++) {
+                const symbol = inputString[i];
+                const nextState = automaton.transitions[currentState] && 
+                                 automaton.transitions[currentState][symbol];
+
+                if (!nextState) {
+                    isValid = false;
+                    trace.push({
+                        step: i + 1,
+                        state: currentState,
+                        remainingInput: inputString.substring(i),
+                        symbol: symbol,
+                        action: `No hay transición para '${symbol}' desde estado ${currentState}`
+                    });
+                    break;
+                }
+
+                currentState = nextState;
+                trace.push({
+                    step: i + 1,
+                    state: currentState,
+                    remainingInput: inputString.substring(i + 1),
+                    symbol: symbol,
+                    action: `Transición con '${symbol}' → ${currentState}`
+                });
+            }
+
+            const finalResult = isValid && automaton.finalStates.includes(currentState);
+
+            return {
+                accepted: finalResult,
+                finalState: currentState,
+                trace: trace,
+                reason: !isValid ? 'No hay transición válida' : 
+                       !automaton.finalStates.includes(currentState) ? 'No terminó en estado final' : 
+                       'Cadena aceptada'
+            };
+        }
+
+        // Función para mostrar el resultado
+        function displayResult(inputString, result) {
+            const resultPanel = document.getElementById('resultPanel');
+            const resultContent = document.getElementById('resultContent');
+
+            const statusClass = result.accepted ? 'result-accepted' : 'result-rejected';
+            const statusIcon = result.accepted ? 'check-circle' : 'times-circle';
+            const statusText = result.accepted ? 'ACEPTADA' : 'RECHAZADA';
+            const statusColor = result.accepted ? 'var(--success-color)' : 'var(--danger-color)';
+
+            let traceHTML = '<div class="transition-trace">';
+            traceHTML += '<strong>Traza de ejecución:</strong><br><br>';
+            
+            result.trace.forEach((step, index) => {
+                const stateClass = step.state === automaton.initialState && index === 0 ? 'state-current' :
+                                  automaton.finalStates.includes(step.state) && index === result.trace.length - 1 ? 'state-final' :
+                                  'state-normal';
+                
+                traceHTML += `<div class="mb-2">`;
+                traceHTML += `<strong>Paso ${step.step}:</strong> `;
+                traceHTML += `Estado <span class="${stateClass}">${step.state}</span>`;
+                
+                if (step.symbol) {
+                    traceHTML += ` - Procesa <span class="symbol-processed">${step.symbol}</span>`;
+                }
+                
+                traceHTML += ` - ${step.action}`;
+                
+                if (step.remainingInput) {
+                    traceHTML += ` (Restante: "${step.remainingInput}")`;
+                } else if (step.step > 0) {
+                    traceHTML += ` (Cadena procesada completamente)`;
+                }
+                
+                traceHTML += `</div>`;
+            });
+            
+            traceHTML += '</div>';
+
+            resultContent.innerHTML = `
+                <div class="result-box ${statusClass}">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-${statusIcon} me-3" style="font-size: 2rem; color: ${statusColor}"></i>
+                        <div>
+                            <h4 style="color: ${statusColor}; margin: 0;">${statusText}</h4>
+                            <p class="mb-0">La cadena "<strong>${inputString}</strong>" ha sido ${result.accepted ? 'aceptada' : 'rechazada'}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Estado final:</strong> ${result.finalState}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Razón:</strong> ${result.reason}
+                        </div>
+                    </div>
+                    
+                    ${traceHTML}
+                </div>
+            `;
+
+            resultPanel.classList.remove('d-none');
+            resultPanel.scrollIntoView({ behavior: 'smooth' });
+
+            // Mostrar alerta
+            const alertType = result.accepted ? 'success' : 'danger';
+            const alertMessage = result.accepted ? 
+                `Cadena "${inputString}" aceptada por el autómata` : 
+                `Cadena "${inputString}" rechazada: ${result.reason}`;
+            showAlert(alertMessage, alertType);
+        }
+
+        // Función para establecer ejemplos
+        function setExample(example) {
+            document.getElementById('stringInput').value = example;
+            document.getElementById('stringInput').focus();
+        }
+
+        // Función para limpiar todo
+        function clearAll() {
+            document.getElementById('stringInput').value = '';
+            document.getElementById('resultPanel').classList.add('d-none');
+            showAlert('Campos limpiados', 'info');
+        }
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            // Event listener para Enter key
+            document.getElementById('stringInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    validateString();
+                }
+            });
+
+            // Enfocar el input al cargar
+            document.getElementById('stringInput').focus();
+        });
+    </script>
+</body>
+</html>
